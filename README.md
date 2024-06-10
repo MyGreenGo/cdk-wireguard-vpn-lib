@@ -35,3 +35,8 @@ A CDK library to develop a Wireguard VPN, to use for example, as a Bastion.
 ## Inspirations: 
 
 * https://github.com/rajyan/low-cost-ecs
+
+## Todo
+
+* [ ] Improve release management
+* [ ] Improve readme
