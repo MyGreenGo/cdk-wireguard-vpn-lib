@@ -9,7 +9,7 @@ import {
 } from "aws-cdk-lib";
 import { Capability, LinuxParameters } from "aws-cdk-lib/aws-ecs";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
-import { IVpc } from "aws-cdk-lib/aws-ec2";
+import { CfnEIP, IVpc } from "aws-cdk-lib/aws-ec2";
 import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
 
 export interface WireguardVpnProps {
@@ -43,6 +43,8 @@ export class WireguardVpn extends Construct {
   static readonly containerImageName = "ghcr.io/wg-easy/wg-easy";
   static readonly dockerName = "wg-easy";
 
+  public readonly hostInstanceIp: CfnEIP;
+
   constructor(scope: Construct, id: string, props: WireguardVpnProps = {}) {
     super(scope, id);
 
@@ -61,11 +63,11 @@ export class WireguardVpn extends Construct {
       });
 
     // Create an elastic IP
-    const hostInstanceIp = new ec2.CfnEIP(this, "HostInstanceIp");
+    this.hostInstanceIp = new ec2.CfnEIP(this, "HostInstanceIp");
 
     // tagging with a unique ID to reference the EIP With
-    const tagUniqueId = cdk.Names.uniqueId(hostInstanceIp);
-    hostInstanceIp.tags.setTag("Name", tagUniqueId);
+    const tagUniqueId = cdk.Names.uniqueId(this.hostInstanceIp);
+    this.hostInstanceIp.tags.setTag("Name", tagUniqueId);
 
     // We will need a Filesystem to persist Wireguard Config Between reboots
     const fileSystem = new efs.FileSystem(this, "Efs", {
@@ -83,20 +85,6 @@ export class WireguardVpn extends Construct {
       }
     );
 
-    // Allow anyone to mount this filesystem
-    // TODO: Ideally, only the ECS should be able to mount it
-    fileSystem.addToResourcePolicy(
-      new iam.PolicyStatement({
-        actions: ["elasticfilesystem:ClientMount"],
-        principals: [new iam.AnyPrincipal()],
-        conditions: {
-          Bool: {
-            "elasticfilesystem:AccessedViaMountTarget": "true",
-          },
-        },
-      })
-    );
-
     // Create ECS cluster the largest group in ECS
     const cluster = new ecs.Cluster(this, "Cluster", { vpc });
 
@@ -110,7 +98,7 @@ export class WireguardVpn extends Construct {
     // Create a task definition for the ECS cluster
     const taskDefinition = this.buildTaskDef(
       fileSystem,
-      hostInstanceIp.attrPublicIp,
+      this.hostInstanceIp.attrPublicIp,
       adminPassword
     );
 
@@ -123,6 +111,20 @@ export class WireguardVpn extends Construct {
       maxHealthyPercent: 200,
       enableExecuteCommand: true,
     });
+
+    // Allow anyone to mount this filesystem
+
+    fileSystem.addToResourcePolicy(
+      new iam.PolicyStatement({
+        actions: ["elasticfilesystem:ClientMount"],
+        principals: [service.taskDefinition.taskRole],
+        conditions: {
+          Bool: {
+            "elasticfilesystem:AccessedViaMountTarget": "true",
+          },
+        },
+      })
+    );
 
     for (const ip of props.allowedCidrsToUi ?? []) {
       // Autoscaling Group security group
@@ -142,6 +144,14 @@ export class WireguardVpn extends Construct {
         ec2.Port.tcp(WireguardVpn.udpPort)
       );
     }
+
+    new cdk.CfnOutput(this, "VpnIpAddress", {
+      value: this.hostInstanceIp.attrPublicIp,
+    });
+
+    new cdk.CfnOutput(this, "UiUrl", {
+      value: `http://${this.hostInstanceIp.attrPublicIp}:${WireguardVpn.tcpPort}`,
+    });
   }
 
   /**

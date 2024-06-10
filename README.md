@@ -40,3 +40,4 @@ A CDK library to develop a Wireguard VPN, to use for example, as a Bastion.
 
 * [ ] Improve release management
 * [ ] Improve readme
+* [ ] Add SSL support to UI
