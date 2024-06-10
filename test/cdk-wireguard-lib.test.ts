@@ -1,18 +1,17 @@
-// import * as cdk from 'aws-cdk-lib';
-// import { Template } from 'aws-cdk-lib/assertions';
-// import * as CdkWireguardLib from '../lib/index';
+import * as cdk from "aws-cdk-lib";
+import { Template } from "aws-cdk-lib/assertions";
+import * as wg from "../lib/index";
 
-// example test. To run these tests, uncomment this file along with the
-// example resource in lib/index.ts
-test('SQS Queue Created', () => {
-//   const app = new cdk.App();
-//   const stack = new cdk.Stack(app, "TestStack");
-//   // WHEN
-//   new CdkWireguardLib.CdkWireguardLib(stack, 'MyTestConstruct');
-//   // THEN
-//   const template = Template.fromStack(stack);
+test("ECS Cluster Created", () => {
+  const app = new cdk.App();
+  const stack = new cdk.Stack(app, "TestStack");
+  //   // WHEN
+  new wg.WireguardVpn(stack, "TestVpn");
 
-//   template.hasResourceProperties('AWS::SQS::Queue', {
-//     VisibilityTimeout: 300
-//   });
+  // THEN
+  const template = Template.fromStack(stack);
+
+  console.log(template);
+
+  template.hasResource("AWS::ECS::Cluster", {});
 });

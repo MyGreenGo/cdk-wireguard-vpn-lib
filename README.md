@@ -10,3 +10,23 @@ The construct defines an interface (`CdkWireguardLibProps`) to configure the vis
 * `npm run build`   compile typescript to js
 * `npm run watch`   watch for changes and compile
 * `npm run test`    perform the jest unit tests
+
+## What
+
+A CDK library to develop a Wireguard VPN, to use for example, as a Bastion
+
+### Components: 
+
+* ECS Cluster with EC2 autoscaling group
+* EC2 instance is a T4G.nano instance
+* En elastic IP for the VPN
+* A NFS to store permanently VPN accesses
+
+
+* Cheap: ~$10/m
+    * EC2.T4g.nano: $4/m
+    * NFS: $0.33/m
+    * EIP: $5/m
+    * SecretManager: $0.40/m
+
+* Self healing with Autoscaling group 
