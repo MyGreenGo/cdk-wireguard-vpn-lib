@@ -1,7 +1,7 @@
 # Welcome to your CDK TypeScript Construct Library project
 
 You should explore the contents of this project. It demonstrates a CDK Construct Library that includes a construct (`CdkWireguardLib`)
-which contains an Amazon SQS queue that is subscribed to an Amazon SNS topic.
+which contains an ECS Cluster with an autoscaling group, trying to keep 1 instance of the wireguard VPN up.
 
 The construct defines an interface (`CdkWireguardLibProps`) to configure the visibility timeout of the queue.
 
@@ -13,7 +13,7 @@ The construct defines an interface (`CdkWireguardLibProps`) to configure the vis
 
 ## What
 
-A CDK library to develop a Wireguard VPN, to use for example, as a Bastion
+A CDK library to develop a Wireguard VPN, to use for example, as a Bastion.
 
 ### Components: 
 
@@ -30,3 +30,8 @@ A CDK library to develop a Wireguard VPN, to use for example, as a Bastion
     * SecretManager: $0.40/m
 
 * Self healing with Autoscaling group 
+
+
+## Inspirations: 
+
+* https://github.com/rajyan/low-cost-ecs
